@@ -10,9 +10,9 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<meta name="author" content="Hongxiang Li and Tsung Fei Khang" />
+<meta name="author" content="Hongxiang Li, Chenglin Xu, and Tsung Fei Khang" />
 
-<meta name="date" content="2026-09-12" />
+<meta name="date" content="2026-09-16" />
 
 <title>Introduction to PBGoF</title>
 
@@ -238,52 +238,53 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 
 <h1 class="title toc-ignore">Introduction to PBGoF</h1>
-<h4 class="author">Hongxiang Li and Tsung Fei Khang</h4>
-<h4 class="date">2026-09-12</h4>
+<h4 class="author">Hongxiang Li, Chenglin Xu, and Tsung Fei Khang</h4>
+<h4 class="date">2026-09-16</h4>
 
 
 
+<style>
+#MathJax_Message { display: none !important; }
+h1.title { hyphens: none; overflow-wrap: normal; word-break: normal; }
+</style>
 <div id="installation" class="section level1">
 <h1>Installation</h1>
-<p>Install PBGoF from GitHub with <code>devtools</code>:</p>
-<pre><code>if (!&quot;devtools&quot; %in% rownames(installed.packages())) {
-  install.packages(&quot;devtools&quot;)
-}
-devtools::install_github(&quot;Divo-Lee/PBGoF&quot;)</code></pre>
-<p>Alternatively, install it with <code>pak</code>:</p>
-<pre><code>if (!&quot;pak&quot; %in% rownames(installed.packages())) {
-  install.packages(&quot;pak&quot;)
-}
-pak::pkg_install(&quot;Divo-Lee/PBGoF&quot;)</code></pre>
-<p>After installation, load the package with:</p>
+<p>Install PBGoF 0.2.0 from a local source archive with:</p>
+<pre><code>install.packages(&quot;PBGoF_0.2.0.tar.gz&quot;, repos = NULL, type = &quot;source&quot;)</code></pre>
+<p>PBGoF provides goodness-of-fit procedures, robust parameter fitting,
+and graphical diagnostics for skew-normal and skew-t models. Version
+0.2.0 adds skew-t fitting, parameter-bootstrap KS and CvM tests, and a
+corresponding graphical diagnostic to the package’s skew-normal
+procedures. After installation, load the package with:</p>
 <pre><code>library(PBGoF)</code></pre>
 </div>
 <div id="overview" class="section level1">
 <h1>Overview</h1>
-<p>PBGoF provides goodness-of-fit tests for assessing whether a numeric
-sample is compatible with a univariate skew-normal (SN) distribution
-when its parameters are unknown and estimated from the same data. This
-is a composite goodness-of-fit problem: estimating the location, scale,
-and shape parameters changes the null distribution of standard empirical
-distribution function (EDF) statistics. Consequently, ordinary
-Kolmogorov–Smirnov p-values for a completely specified distribution are
-not appropriate.</p>
+<p>PBGoF assesses whether a numeric sample is compatible with a fitted
+univariate skew-normal (SN) or skew-t (ST) distribution. In both cases
+the parameters are estimated from the same observations used to
+calculate the empirical distribution function (EDF) statistic. This
+makes the null hypothesis composite, so an ordinary Kolmogorov–Smirnov
+p-value for a completely specified distribution is not appropriate.</p>
 <p>The package offers two complementary approaches:</p>
 <ol style="list-style-type: decimal">
 <li><strong>Parametric bootstrap tests</strong> simulate a reference
 distribution for the observed sample and re-estimate all parameters in
 every replicate.</li>
-<li><strong>Precomputed-quantile tests</strong> use tables obtained from
-100,000 Monte Carlo replicates for each combination of sample size and
-centered skewness represented in the bundled tables.</li>
+<li><strong>SN precomputed-quantile tests</strong> use tables obtained
+from 100,000 Monte Carlo replicates for each combination of sample size
+and centered skewness represented in the bundled tables.</li>
 </ol>
-<p>Both approaches are available for the Kolmogorov–Smirnov (KS) and
-Cramér–von Mises (CvM) statistics. Parameter estimation is performed by
-sn.fit.robust(), which uses a sequence of increasingly stabilized
-fitting methods.</p>
+<p>Parametric bootstrap KS and CvM tests are available for both
+families. The precomputed tables apply only to SN. Parameter estimation
+is performed by <code>sn.fit.robust()</code> for SN and
+<code>st.fit.robust()</code> for ST; each function uses a sequence of
+increasingly stabilized fitting methods.</p>
 </div>
-<div id="the-skew-normal-model" class="section level1">
-<h1>The skew-normal model</h1>
+<div id="distribution-models" class="section level1">
+<h1>Distribution models</h1>
+<div id="skew-normal-model" class="section level2">
+<h2>Skew-normal model</h2>
 <p>Under the direct parameterization (DP), the skew-normal model has
 location xi, positive scale omega, and shape alpha. Setting alpha to
 zero gives a normal distribution; positive and negative values produce
@@ -300,6 +301,20 @@ CP is convenient for matching fitted skewness to the precomputed
 simulation tables. The signs of alpha and gamma1 agree: positive alpha
 corresponds to positive gamma1, and negative alpha corresponds to
 negative gamma1.</p>
+</div>
+<div id="skew-t-model" class="section level2">
+<h2>Skew-t model</h2>
+<p>The skew-t model can represent asymmetry and heavy tails
+simultaneously. Its direct parameterization is <span class="math inline">\((\xi,\omega,\alpha,\nu)\)</span>, where <span class="math inline">\(\xi\)</span> is location, <span class="math inline">\(\omega&gt;0\)</span> is scale, <span class="math inline">\(\alpha\)</span> controls asymmetry, and <span class="math inline">\(\nu&gt;0\)</span> is the degrees of freedom
+controlling tail weight. As <span class="math inline">\(\nu\)</span>
+becomes large, the skew-t model approaches the skew-normal model.</p>
+<p>PBGoF fits the model with <code>st.fit.robust()</code>, evaluates it
+graphically with <code>st.plot.check()</code>, and provides
+parameter-bootstrap KS and CvM tests through
+<code>st.para.bootstrap.ks.test()</code> and
+<code>st.para.bootstrap.cvm.test()</code>. The bootstrap procedure
+re-estimates all four parameters in every valid replicate.</p>
+</div>
 <div id="why-lookup-uses-the-absolute-skewness" class="section level2">
 <h2>Why lookup uses the absolute skewness</h2>
 <p>Suppose X follows an SN distribution with DP parameters (xi, omega,
@@ -329,26 +344,36 @@ lookup value.</p>
 
 set.seed(2026)
 x &lt;- sn::rsn(100, xi = 0, omega = 1, alpha = 4)
+x_st &lt;- sn::rst(150, xi = 0, omega = 1, alpha = 3, nu = 8)
 
 sn.fit.robust(x, para_form = &quot;DP&quot;)
-sn.fit.robust(x, para_form = &quot;CP&quot;)</code></pre>
+sn.fit.robust(x, para_form = &quot;CP&quot;)
+st.fit.robust(x_st, para_form = &quot;DP&quot;)</code></pre>
 <p>sn.fit.robust() first attempts ordinary maximum likelihood estimation
 (MLE). If the fit does not yield finite estimates and standard errors,
 it tries maximum penalized likelihood estimation (MPLE) with the default
 penalty and then MPLE with the matching-prior penalty. If every attempt
 fails, the function returns a named vector of missing values and issues
 a warning.</p>
+<p><code>st.fit.robust()</code> applies the same idea to the
+four-parameter skew-t family. It tries MLE first and then Q-penalized
+MPLE with <code>nlminb</code> and <code>BFGS</code> fallbacks. The DP
+output contains <code>xi</code>, <code>omega</code>, <code>alpha</code>,
+and <code>nu</code>, together with their standard errors. The CP output
+contains mean, standard deviation, skewness, and kurtosis when those
+moments exist.</p>
 <p>Here, <em>robust</em> refers to protection against numerical fitting
 failures. It does not mean that the estimator is resistant to outliers
 or contamination. Users should still inspect their data and assess
-whether the skew-normal family is a scientifically reasonable model.</p>
+whether the selected distribution is a scientifically reasonable
+model.</p>
 <p>The input must be a numeric vector containing at least 10 finite
 observations and at least two distinct values. Matrices, factors,
 missing values, and infinite values are rejected rather than silently
 converted.</p>
 </div>
-<div id="graphical-assessment-of-the-fitted-model" class="section level1">
-<h1>Graphical assessment of the fitted model</h1>
+<div id="graphical-assessment-of-the-fitted-models" class="section level1">
+<h1>Graphical assessment of the fitted models</h1>
 <p>sn.plot.check() provides a quick visual comparison between the
 observed sample and its fitted skew-normal distribution. It draws a
 density-scale histogram, adds the fitted SN density, and optionally
@@ -378,23 +403,28 @@ it is often useful to compare several choices:</p>
 <pre><code>sn.plot.check(x_plot, breaks = &quot;FD&quot;)
 sn.plot.check(x_plot, breaks = &quot;Scott&quot;)
 sn.plot.check(x_plot, breaks = 20)</code></pre>
-<p>The plot is a diagnostic aid rather than a formal decision rule. It
-should be used alongside PBGoF_ks_test(), PBGoF_cvm_test(), or their
-parametric bootstrap counterparts.</p>
+<p>For a skew-t fit, <code>st.plot.check()</code> uses the same visual
+design and calls <code>st.fit.robust()</code> internally:</p>
+<pre><code>st.plot.check(x_st, breaks = &quot;FD&quot;)</code></pre>
+<p>The plots are diagnostic aids rather than formal decision rules. Use
+<code>sn.plot.check()</code> with SN tests and
+<code>st.plot.check()</code> with ST tests.</p>
 </div>
 <div id="parametric-bootstrap-tests" class="section level1">
 <h1>Parametric bootstrap tests</h1>
 <p>The bootstrap functions are:</p>
 <pre><code>sn.para.bootstrap.ks.test(x, B = 1000, seed = 103)
-sn.para.bootstrap.cvm.test(x, B = 1000, seed = 103)</code></pre>
+sn.para.bootstrap.cvm.test(x, B = 1000, seed = 103)
+st.para.bootstrap.ks.test(x_st, B = 1000, seed = 103)
+st.para.bootstrap.cvm.test(x_st, B = 1000, seed = 104)</code></pre>
 <p>For each test, PBGoF performs these steps:</p>
 <ol style="list-style-type: decimal">
-<li>Fit an SN distribution to the observed data.</li>
+<li>Fit the selected SN or ST distribution to the observed data.</li>
 <li>Calculate the observed EDF statistic using the fitted DP
 parameters.</li>
-<li>Generate B samples of the same size from the fitted SN
-distribution.</li>
-<li>Refit the SN distribution separately in every bootstrap sample.</li>
+<li>Generate B samples of the same size from the fitted model.</li>
+<li>Refit the selected distribution separately in every bootstrap
+sample; the ST tests re-estimate all four parameters, including nu.</li>
 <li>Recalculate the statistic using each bootstrap sample’s fitted
 parameters.</li>
 <li>Estimate the p-value from the proportion of valid bootstrap
@@ -416,8 +446,8 @@ more computation. Values such as 999 or 1999 are useful during analysis;
 substantially larger values may be preferable for final inference near a
 decision threshold.</p>
 </div>
-<div id="tests-based-on-precomputed-quantiles" class="section level1">
-<h1>Tests based on precomputed quantiles</h1>
+<div id="skew-normal-tests-based-on-precomputed-quantiles" class="section level1">
+<h1>Skew-normal tests based on precomputed quantiles</h1>
 <p>The fast lookup functions are:</p>
 <pre><code>PBGoF_ks_test(x)
 PBGoF_cvm_test(x)</code></pre>
@@ -477,11 +507,12 @@ to the observed sample size is important, when the sample size is below
 the table range, or when a more finely resolved p-value is needed. Its
 main cost is computation because every bootstrap sample must be
 refitted.</p>
-<p>Use a <strong>precomputed-quantile test</strong> for rapid repeated
-screening when the table’s sample-size and skewness grid is appropriate.
-It is especially useful when many datasets must be tested, but its
-p-values are discretized and depend on the simulation design used to
-create the tables.</p>
+<p>Use an <strong>SN precomputed-quantile test</strong> for rapid
+repeated screening when the table’s sample-size and skewness grid is
+appropriate. It is especially useful when many datasets must be tested,
+but its p-values are discretized and depend on the simulation design
+used to create the tables. Precomputed tables are available only for SN;
+use parameter bootstrap for ST.</p>
 <p>For important conclusions, it can be useful to run the lookup test
 first and confirm borderline results with a sufficiently large
 parametric bootstrap.</p>
@@ -489,18 +520,18 @@ parametric bootstrap.</p>
 <div id="interpretation-and-limitations" class="section level1">
 <h1>Interpretation and limitations</h1>
 <p>A small p-value indicates that the observed EDF discrepancy is
-unusually large under the fitted skew-normal model. It is evidence
-against that model, not a measure of the practical importance of the
-discrepancy. Conversely, a large p-value does not prove that the data
-are skew-normal; it means that the test did not detect a departure at
+unusually large under the fitted SN or ST model. It is evidence against
+the selected model, not a measure of the practical importance of the
+discrepancy. Conversely, a large p-value does not prove that the fitted
+family is correct; it means that the test did not detect a departure at
 the available sample size and resolution.</p>
 <p>The tests assume independent observations from a continuous
 distribution. Serial dependence, clustering, censoring, rounding, or
 many ties can alter the null distribution. The procedures also inherit
-limitations of skew-normal parameter estimation, especially near
-symmetry or extreme skewness. Graphical checks such as histograms,
-fitted densities, and probability plots should be used alongside the
-formal tests.</p>
+limitations of parameter estimation, especially near symmetry, extreme
+skewness, or an ST fit whose estimated nu lies near a numerical
+boundary. Graphical checks such as histograms, fitted densities, and
+probability plots should be used alongside the formal tests.</p>
 </div>
 <div id="references" class="section level1">
 <h1>References</h1>
